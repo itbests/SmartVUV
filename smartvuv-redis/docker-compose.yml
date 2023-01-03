@@ -1,0 +1,23 @@
+# For more information: https://laravel.com/docs/sail
+version: '3.7'
+services:
+    smartvuv_redis:
+        container_name: smartvuv_redis
+        image: 'redis:alpine'
+        ports:
+            - '${FORWARD_REDIS_PORT:-6379}:6379'
+        volumes:
+            - 'smartvuv_redis:/data'
+        networks:
+            - smartvuv_net
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            retries: 3
+            timeout: 5s
+networks:
+    smartvuv_net:
+        driver: bridge
+        external: true
+volumes:
+    smartvuv_redis:
+        driver: local

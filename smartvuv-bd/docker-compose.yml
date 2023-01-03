@@ -1,0 +1,120 @@
+# For more information: https://laravel.com/docs/sail
+version: '3.7'
+services:    
+    smartvuv_db-1:
+        container_name: smartvuv_db-1
+        hostname: smartvuv_db-1
+        image: bitnami/postgresql-repmgr:14
+        ports:
+            - 5432
+        volumes:
+            - smartvuv_db-1:/bitnami/postgresql
+        environment:
+            - POSTGRESQL_POSTGRES_PASSWORD=${DB_PASSWORD}
+            - POSTGRESQL_USERNAME=${DB_USERNAME}
+            - POSTGRESQL_PASSWORD=${DB_PASSWORD}
+            - POSTGRESQL_DATABASE=${DB_DATABASE}
+            - REPMGR_PASSWORD=${DB_PASSWORD}
+            - REPMGR_PRIMARY_HOST=smartvuv_db-1
+            - REPMGR_PARTNER_NODES=smartvuv_db-1,smartvuv_db-2,smartvuv_db-3
+            - REPMGR_NODE_ID=1
+            - REPMGR_NODE_NAME=smartvuv_db-1
+            - REPMGR_NODE_NETWORK_NAME=smartvuv_db-1            
+        networks:
+            - smartvuv_net
+    smartvuv_db-2:
+        container_name: smartvuv_db-2
+        hostname: smartvuv_db-2
+        image: bitnami/postgresql-repmgr:14
+        ports:
+            - 5432
+        volumes:
+            - smartvuv_db-2:/bitnami/postgresql
+        environment:
+            - POSTGRESQL_POSTGRES_PASSWORD=${DB_PASSWORD}
+            - POSTGRESQL_USERNAME=${DB_USERNAME}
+            - POSTGRESQL_PASSWORD=${DB_PASSWORD}
+            - POSTGRESQL_DATABASE=${DB_DATABASE}
+            - REPMGR_PASSWORD=${DB_PASSWORD}
+            - REPMGR_PRIMARY_HOST=smartvuv_db-1
+            - REPMGR_PARTNER_NODES=smartvuv_db-1,smartvuv_db-2,smartvuv_db-3
+            - REPMGR_NODE_ID=2
+            - REPMGR_NODE_NAME=smartvuv_db-2
+            - REPMGR_NODE_NETWORK_NAME=smartvuv_db-2            
+        networks:
+            - smartvuv_net
+        depends_on:
+            - smartvuv_db-1
+    smartvuv_db-3:
+        container_name: smartvuv_db-3
+        hostname: smartvuv_db-3
+        image: bitnami/postgresql-repmgr:14
+        ports:
+            - 5432
+        volumes:
+            - smartvuv_db-3:/bitnami/postgresql
+        environment:
+            - POSTGRESQL_POSTGRES_PASSWORD=${DB_PASSWORD}
+            - POSTGRESQL_USERNAME=${DB_USERNAME}
+            - POSTGRESQL_PASSWORD=${DB_PASSWORD}
+            - POSTGRESQL_DATABASE=${DB_DATABASE}
+            - REPMGR_PASSWORD=${DB_PASSWORD}
+            - REPMGR_PRIMARY_HOST=smartvuv_db-1
+            - REPMGR_PARTNER_NODES=smartvuv_db-1,smartvuv_db-2,smartvuv_db-3
+            - REPMGR_NODE_ID=3
+            - REPMGR_NODE_NAME=smartvuv_db-3
+            - REPMGR_NODE_NETWORK_NAME=smartvuv_db-3
+        networks:
+            - smartvuv_net
+        depends_on:
+            - smartvuv_db-1
+    smartvuv_pgpool:
+        container_name: smartvuv_pgpool
+        image: bitnami/pgpool:4
+        ports:
+            - 5432:5432
+        environment:
+            - PGPOOL_BACKEND_NODES=0:smartvuv_db-1:5432,1:smartvuv_db-2:5432,2:smartvuv_db-3:5432
+            - PGPOOL_SR_CHECK_USER=${DB_USERNAME}
+            - PGPOOL_SR_CHECK_PASSWORD=${DB_PASSWORD}
+            - PGPOOL_ENABLE_LDAP=no
+            - PGPOOL_POSTGRES_USERNAME=${DB_USERNAME}
+            - PGPOOL_POSTGRES_PASSWORD=${DB_PASSWORD}
+            - PGPOOL_ADMIN_USERNAME=${DB_USERNAME}
+            - PGPOOL_ADMIN_PASSWORD=${DB_PASSWORD}
+        healthcheck:
+            test: ["CMD", "/opt/bitnami/scripts/pgpool/healthcheck.sh"]
+            interval: 10s
+            timeout: 10s
+            retries: 5
+        networks:
+            - smartvuv_net
+        depends_on:
+            - smartvuv_db-1
+    smartvuv_pgadmin:
+        container_name: smartvuv_pgadmin
+        image: 'dpage/pgadmin4:4.18'
+        restart: always
+        ports:
+            - '8088:8088'
+        environment:
+            PGADMIN_DEFAULT_EMAIL: '${MAIL_USERNAME}'
+            PGADMIN_DEFAULT_PASSWORD: '${MAIL_PASSWORD}'
+            PGADMIN_LISTEN_PORT: 8088
+        volumes:
+            - 'smartvuv_pgadmin:/var/lib/pgadmin'
+        networks:
+            - smartvuv_net
+networks:
+    smartvuv_net:
+        driver: bridge
+        external: true
+volumes:
+    smartvuv_db-1:
+        driver: local
+    smartvuv_db-2:
+        driver: local
+    smartvuv_db-3:
+        driver: local
+    smartvuv_pgadmin:
+        driver: local

@@ -1,0 +1,32 @@
+http:
+  routers:
+    traefik:
+      rule: "Host(`traefik.docker.localhost`)"
+      service: "api@internal"
+      tls:
+        domains:
+          - main: "docker.localhost"
+            sans:
+              - "*.docker.localhost"
+          - main: "coderstm.localhost"
+            sans:
+              - "*.coderstm.localhost"
+    smartvuv:
+      rule: "Host(`smartvuv.docker.localhost`)"
+      service: "smartvuv-service"
+      tls:
+        domains:
+          - main: "docker.localhost"
+            sans:
+              - "*.docker.localhost"   
+  services:
+    smartvuv-service:
+      loadBalancer:
+        servers:
+          - url: "http://smartvuv1:80"
+          - url: "http://smartvuv2:80"
+          - url: "http://smartvuv3:80"
+tls:
+  certificates:
+    - certFile: "/etc/certs/local-cert.pem"
+      keyFile: "/etc/certs/local-key.pem"
